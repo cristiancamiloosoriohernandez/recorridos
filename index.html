@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Recorridos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 50px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    input[type="text"], input[type="number"], input[type="email"], input[type="date"], textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .result-section {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f8f8f8;
+      border-radius: 5px;
+    }
+    .button-group {
+      margin-top: 20px;
+    }
+    button.reset {
+      background-color: #f44336;
+    }
+    button.reset:hover {
+      background-color: #e53935;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Calculadora de Recorridos</h1>
+    <form id="recorrido-form" name="recorrido-form">
+      <label for="lugar">Lugar:</label> <input type="text" id="lugar" required=""> <label for="km">Kilómetros actuales:</label> <input type="number" id="km" required=""> <label for="tanqueada">¿Tanqueada realizada?</label> <input type="checkbox" id="tanqueada" onclick="toggleTanqueadaForm()">
+      <div id="tanqueada-form" style="display: none;">
+        <label for="costo-tanqueada">Costo de Tanqueada:</label> <input type="number" id="costo-tanqueada"> <label for="bomba-tanqueada">Bomba de Tanqueada:</label> <input type="text" id="bomba-tanqueada">
+      </div><label for="email">Correo electrónico (para enviar resultados):</label> <input type="email" id="email" required="">
+      <div class="button-group">
+        <button type="button" onclick="guardarDatos()">Guardar Datos</button> <button type="button" onclick="enviarDatos()">Enviar por Correo</button> <button type="button" class="reset" onclick="reiniciarDatos()">Reiniciar Datos del Día</button>
+      </div>
+    </form>
+    <div class="result-section">
+      <h3>Resumen de Datos</h3>
+      <p id="recorridos-totales">Recorridos Totales: 0</p>
+      <p id="recorrido-largo">Recorrido más largo: 0 km</p>
+      <p id="promedio-km">Promedio de KM: 0 km</p>
+      <p id="gasto-promedio">Gasto promedio de gasolina: 0</p>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script> 
+  <script>
+
+
+  emailjs.init("rcVB7lRKymKCjmHP-"); // Reemplaza con tu User ID real de EmailJS.
+
+  function enviarDatos() {
+  const email = document.getElementById('email').value;
+
+  if (!email) {
+    alert('Por favor, ingresa un correo electrónico válido.');
+    return;
+  }
+
+  if (recorridos.length === 0) {
+    alert('No hay datos para enviar.');
+    return;
+  }
+
+  let errores = 0;
+
+  recorridos.forEach((recorrido, index) => {
+    const templateParams = {
+      email: email,
+      lugar: recorrido.lugar,
+      km: recorrido.km,
+      costoTanqueada: recorrido.costoTanqueada || 'No realizado',
+      bombaTanqueada: recorrido.bombaTanqueada || 'N/A',
+      fecha: recorrido.fecha,
+    };
+
+    emailjs
+      .send("service_tme7x7y", "template_wqg8ldr", templateParams)
+      .then(() => {
+        console.log(`Correo #${index + 1} enviado con éxito`);
+      })
+      .catch((error) => {
+        console.error(`Error al enviar el correo #${index + 1}:`, error);
+        errores++;
+      })
+      .finally(() => {
+        if (index === recorridos.length - 1) {
+          if (errores === 0) {
+            alert('Todos los correos se enviaron correctamente.');
+          } else {
+            alert(`Se encontraron problemas al enviar ${errores} correos.`);
+          }
+        }
+      });
+  });
+  }
+  let recorridos = JSON.parse(localStorage.getItem('recorridos')) || [];
+
+  function guardarDatos() {
+    const lugar = document.getElementById('lugar').value;
+    const km = parseInt(document.getElementById('km').value);
+    const costoTanqueada = document.getElementById('costo-tanqueada').value ? parseFloat(document.getElementById('costo-tanqueada').value) : null;
+    const bombaTanqueada = document.getElementById('bomba-tanqueada').value || null;
+    const tanqueada = document.getElementById('tanqueada').checked;
+
+    const recorrido = {
+      lugar,
+      km,
+      costoTanqueada,
+      bombaTanqueada,
+      tanqueada,
+      fecha: new Date().toLocaleString()
+    };
+
+    recorridos.push(recorrido);
+    localStorage.setItem('recorridos', JSON.stringify(recorridos));
+
+    alert('Datos guardados correctamente.');
+    actualizarResumen();
+  }
+
+  function toggleTanqueadaForm() {
+    const tanqueadaForm = document.getElementById('tanqueada-form');
+    tanqueadaForm.style.display = document.getElementById('tanqueada').checked ? 'block' : 'none';
+  }
+
+  function enviarDatos() {
+    const email = document.getElementById('email').value;
+
+    if (recorridos.length === 0) {
+      alert('No hay datos para enviar.');
+      return;
+    }
+
+    recorridos.forEach(recorrido => {
+      const templateParams = {
+        email,
+        lugar: recorrido.lugar,
+        km: recorrido.km,
+        costoTanqueada: recorrido.costoTanqueada || 'No realizado',
+        bombaTanqueada: recorrido.bombaTanqueada || 'N/A',
+        fecha: recorrido.fecha
+      };
+
+      emailjs.send("service_tme7x7y", "template_wqg8ldr", templateParams)
+        .then(() => console.log('Correo enviado con éxito'))
+        .catch(error => console.error('Error al enviar el correo', error));
+    });
+
+    alert('Correos enviados correctamente.');
+  }
+
+  function reiniciarDatos() {
+    if (confirm('¿Estás seguro de que deseas reiniciar los datos del día?')) {
+      recorridos = [];
+      localStorage.removeItem('recorridos');
+      actualizarResumen();
+      alert('Datos reiniciados correctamente.');
+    }
+  }
+
+  function actualizarResumen() {
+    const totalRecorridos = recorridos.length;
+    const recorridoLargo = Math.max(...recorridos.map(r => r.km), 0);
+    const promedioKM = recorridos.reduce((sum, r) => sum + r.km, 0) / totalRecorridos || 0;
+    const gastoPromedio = recorridos.filter(r => r.costoTanqueada).reduce((sum, r) => sum + r.costoTanqueada, 0) / totalRecorridos || 0;
+
+    document.getElementById('recorridos-totales').innerText = `Recorridos Totales: ${totalRecorridos}`;
+    document.getElementById('recorrido-largo').innerText = `Recorrido más largo: ${recorridoLargo} km`;
+    document.getElementById('promedio-km').innerText = `Promedio de KM: ${promedioKM.toFixed(2)} km`;
+    document.getElementById('gasto-promedio').innerText = `Gasto promedio de gasolina: ${gastoPromedio.toFixed(2)}`;
+  }
+
+  // Actualiza el resumen al cargar la página
+  actualizarResumen();
+  </script>
+</body>
+</html>
